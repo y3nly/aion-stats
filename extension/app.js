@@ -13,7 +13,7 @@
     pasteLabel:['NotMeter stat export','NotMeter 스탯 내보내기'],importButton:['Import into both modes','두 모드에 가져오기'],
     importDetails:['Imported values and remaining inputs','가져온 값과 남은 입력 항목'],
     bongDesc:['Original formulas · normal and guaranteed critical skills','원본 공식 · 일반/확정 치명 스킬'],
-    nmDesc:['NotMeter formulas · detailed attack components','NotMeter 공식 · 세부 공격 수치'],
+    nmDesc:['NotMeter-based · optional research model','NotMeter 공식 · 세부 공격 수치'],
     imported:['Imported','가져옴'],derived:['Derived','환산값'],
     retained:['Kept value','기존 값'],manual:['Edited','직접 수정'],
     empty:['Enter stat','직접 입력'],
@@ -28,7 +28,7 @@
     delta:['Option changes to compare','비교할 옵션 증가량'],deltaHelp:['Enter the gains or losses from an equipment change. These affect the comparison only.','장비 변경으로 증가/감소하는 값을 입력하세요. 비교 결과에만 적용됩니다.'],
     ranking:['Stat efficiency ranking','스탯 투자 효율'],expected:['DPH','기대 피해'],after:['New DPH','옵션 변경 후'],gain:['Damage gain','피해 증가율'],
     attack:['Reconstructed character-window Attack','환산 캐릭터 창 공격력'],
-    method:['Detailed attack components, Perfect Chance, and Weapon Damage Boost follow NotMeter’s public stat calculator (20261013-hard-hit). Skill mix, cooldowns, and rotations are not modeled. Enemy Defense, Penetration, Multi-hit, and Bongbong resistances do not participate in this mode.','세부 공격 수치, 완벽, 무기 피해 증폭은 NotMeter 공개 계산기(20261013-hard-hit)를 따릅니다. 스킬 비중/재사용 시간/사이클은 제외합니다. 이 모드는 방어력, 관통, 다단 히트 및 Bongbong 내성을 사용하지 않습니다.'],
+    method:['NotMeter-based attack model with Global divine growth (0.1pp per point). Enable the research model for Multi-hit, racial boost, skill scaling, and estimated target mitigation. Missing new stats require manual entry; zero is an explicit initial assumption.','NotMeter 기반 공격 모델과 글로벌 주신 성장(포인트당 0.1%p). 연구 모델은 다단 히트, 종족 증폭, 스킬 배율 및 대상 추정을 추가합니다. 미제공 신규 스탯은 직접 입력하며 초기 0은 가정입니다.'],
     critHelp:['Critical chance is a manual combat assumption; the current documented paste fields do not supply it. Imported divine stats are already reflected in the copied percentages; changing divine points applies only the difference from that imported baseline.','치명타 발동률은 직접 설정하는 전투 조건입니다. 현재 확인된 내보내기 필드에는 포함되지 않습니다. 주신 스탯은 복사된 비율에 이미 반영되어 있으므로 변경 시 가져온 기준 대비 차이만 적용됩니다.'],
     invalidCalc:['Enter valid attack values (Max Attack ≥ Min Attack) and combat assumptions to calculate.','유효한 공격 수치(최대 ≥ 최소)와 전투 조건을 입력하세요.'],
     save1:['Save as 1','1번 저장'],save2:['Save as 2','2번 저장'],load1:['Load 1','1번 불러오기'],load2:['Load 2','2번 불러오기'],compare:['Compare 1 ↔ 2','1번 ↔ 2번 비교'],
@@ -40,7 +40,7 @@
   };
   const c=k=>copy[k]?.[locale==='ko'?1:0]??k;
   const name=k=>model.fields[k]?.[locale==='ko'?1:0]??k;
-  const shortNames={power:'Might',destruction:'Destruction',justice:'Justice',wisdom:'Wisdom',attack:'Attack',additionalAttack:'Attack Bonus',minimumAttack:'Min Attack',maximumAttack:'Max Attack',pveAttack:'PvE Attack',bossAttack:'Boss Attack',attackIncreasePercent:'Attack Increase',damageAmplificationPercent:'Damage Boost',weaponDamageAmplificationPercent:'Weapon Boost',pveDamageAmplificationPercent:'PvE Boost',bossDamageAmplificationPercent:'Boss Boost',criticalDamageAmplificationPercent:'Crit Boost',perfectPercent:'Perfect Chance',hardHitPercent:'Double Chance',frontDamageAmplificationPercent:'Front Boost',backDamageAmplificationPercent:'Back Boost'};
+  const shortNames={multiHitPercent:'Multi-hit',penetration:'Penetration',raceDamageAmplificationPercent:'Racial Boost',power:'Might',destruction:'Destruction',justice:'Justice',wisdom:'Wisdom',attack:'Attack',additionalAttack:'Attack Bonus',minimumAttack:'Min Attack',maximumAttack:'Max Attack',pveAttack:'PvE Attack',bossAttack:'Boss Attack',attackIncreasePercent:'Attack Increase',damageAmplificationPercent:'Damage Boost',weaponDamageAmplificationPercent:'Weapon Boost',pveDamageAmplificationPercent:'PvE Boost',bossDamageAmplificationPercent:'Boss Boost',criticalDamageAmplificationPercent:'Crit Boost',perfectPercent:'Perfect Chance',hardHitPercent:'Double Chance',frontDamageAmplificationPercent:'Front Boost',backDamageAmplificationPercent:'Back Boost'};
   const chartName=k=>locale==='en'?(shortNames[k]??name(k)):name(k).replace(/ %$/,'');
   const esc=s=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const normalize=s=>s.replace(/\s+/g,' ').trim();
@@ -87,44 +87,56 @@
   }
   const nmHost=$('notmeter-mode');
   nmHost.dataset.owned='';
-  const deltaKeys=model.baseline.filter(k=>!['power','destruction','justice','wisdom'].includes(k));
+  const deltaKeys=model.baseline.concat(['multiHitPercent','penetration','raceDamageAmplificationPercent']).filter(k=>!['power','destruction','justice','wisdom'].includes(k));
   function group(title,keys,prefix,values){
     return '<section class="panel"><h2>'+esc(c(title))+'</h2><div class="fields">'+keys.map(k=>'<div class="f"><label for="'+prefix+k+'">'+esc(name(k))+'</label><input type="number" step="any" id="'+prefix+k+'" data-field="'+k+'" data-kind="'+prefix+'" value="'+esc(Number.isFinite(values[k])?values[k]:'')+'"></div>').join('')+'</div></section>';
   }
+  function researchPanel(){
+    const en=locale==='en';
+    return '<section class="panel"><h2>'+(en?'Multi-hit & target estimates':'다단 히트 및 대상 추정')+'</h2><label><input id="nm-research" type="checkbox" '+(nm.researchEnabled?'checked':'')+'> '+(en?'Enable research model':'연구 모델 사용')+'</label><p class="nm-note">'+(en?'Assumptions: 19% hidden Multi-hit chance; 1–4 extra strikes, each +5% Core Attack (12.5% average per proc). Bonus/PvE/Boss Attack and skill flat damage are excluded. Boss presets are KR-based estimates, unverified for Global. Defense is raw rating (3,000 means 300 reduction before Penetration). Coefficient 1 / flat 0 compares generic hits; enter skill values for skill-specific efficiency.':'가정: 기본 다단 히트 19%, 1~4회 각 핵심 공격력 +5% (발동당 평균 12.5%). 추가/PvE/보스 공격력 및 스킬 고정 피해 제외. 보스는 KR 기반 추정값이며 글로벌 미검증. 방어력 3,000은 관통 전 피해 감소 300. 계수 1/고정 피해 0은 일반 비교용입니다.')+'</p><div class="fields"><div class="f"><label for="nm-preset">'+(en?'Target estimate':'대상 추정')+'</label><select id="nm-preset"><option value="">'+(en?'Custom':'직접 설정')+'</option>'+model.presets.map(p=>'<option value="'+p.id+'" '+(nm.bossPreset===p.id?'selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select></div><button id="nm-back-recommend" class="compare-btn">'+(en?'Use suggested back uptime':'권장 후방 비율 적용')+'</button></div><p class="nm-note" id="nm-preset-note"></p></section>'+group('scenario',model.researchKeys,'nm-',nm);
+  }
   function makeNm(){
-    nmHost.innerHTML=group('baseline',model.baseline,'nm-',nm)+group('scenario',model.scenario,'nm-',nm)+
+    nmHost.innerHTML=researchPanel()+group('baseline',model.baseline,'nm-',nm)+group('scenario',model.scenario,'nm-',nm)+
       '<section class="panel"><div class="f"><label for="nm-direction">'+c('direction')+'</label><select id="nm-direction">'+['none','front','back'].map(k=>'<option value="'+k+'"'+(nm.attackType===k?' selected':'')+'>'+c(k)+'</option>').join('')+'</select></div><p class="nm-note">'+c('critHelp')+'</p><p class="nm-note">'+c('method')+' <a href="https://notmeter.com/?view=stat-efficiency" target="_blank" rel="noopener">NotMeter ↗</a></p></section>'+
       '<section class="panel"><h2>'+c('delta')+'</h2><p class="nm-note">'+c('deltaHelp')+'</p><div class="fields nm-delta">'+deltaKeys.map(k=>'<div class="f"><label for="delta-'+k+'">'+esc(name(k))+'</label><input type="number" step="any" id="delta-'+k+'" data-field="'+k+'" data-kind="delta-" placeholder="0" value="'+esc(deltas[k]??'')+'"></div>').join('')+'</div><button id="nm-clear" class="compare-btn">'+c('clear')+'</button></section>'+
       '<div id="nm-output" aria-live="polite"></div><section class="panel"><h2>'+c('compare')+'</h2><div class="nm-slots">'+['save1','load1','save2','load2','compare'].map(k=>'<button class="compare-btn" id="nm-'+k+'">'+c(k)+'</button>').join('')+'</div><p id="nm-slot-status" class="nm-status" role="status"></p><div id="nm-comparison"></div></section>';
     renderNm();
   }
   function effective(s=nm,b=divine){
-    return {...s,attackIncreasePercent:s.attackIncreasePercent+(s.power-b.power)*.1+(s.destruction-b.destruction)*.2,
-      perfectPercent:s.perfectPercent+(s.justice-b.justice)*.2,hardHitPercent:s.hardHitPercent+(s.wisdom-b.wisdom)*.2};
+    return {...s,attackIncreasePercent:s.attackIncreasePercent+(s.power-b.power)*.1+(s.destruction-b.destruction)*.1,
+      perfectPercent:s.perfectPercent+(s.justice-b.justice)*.1,hardHitPercent:s.hardHitPercent+(s.wisdom-b.wisdom)*.1};
   }
   function fmt(n){return n.toLocaleString(locale==='en'?'en-US':'ko-KR',{maximumFractionDigits:2});}
   function gain(n){return (n>=0?'+':'')+n.toFixed(2)+'%';}
   function renderNm(){
     const out=$('nm-output'), option={...deltas};
-    option.attackIncreasePercent=(option.attackIncreasePercent??0)+(nm.power-divine.power)*.1+(nm.destruction-divine.destruction)*.2;
-    option.perfectPercent=(option.perfectPercent??0)+(nm.justice-divine.justice)*.2;
-    option.hardHitPercent=(option.hardHitPercent??0)+(nm.wisdom-divine.wisdom)*.2;
+    const preset=model.presets.find(p=>p.id===nm.bossPreset);
+    $('nm-preset-note').textContent=preset?(locale==='en'?'Suggested back uptime: ':'권장 후방 비율: ')+(preset.recommendedBackAttackRate*100)+'%'+(preset.minAccuracyNoParry?(locale==='en'?' · Accuracy 1,500 is an unverified note; parry is not modeled.':' · 명중 1,500은 미검증 참고값이며 무기 방어는 계산하지 않습니다.'):''):'';
+    $('nm-back-recommend').disabled=!preset;
+    option.attackIncreasePercent=(option.attackIncreasePercent??0)+(nm.power-divine.power)*.1+(nm.destruction-divine.destruction)*.1;
+    option.perfectPercent=(option.perfectPercent??0)+(nm.justice-divine.justice)*.1;
+    option.hardHitPercent=(option.hardHitPercent??0)+(nm.wisdom-divine.wisdom)*.1;
     const result=model.calculate(nm,option);
     if(!result){out.innerHTML='<p class="nm-status">'+c(model.baseline.some(k=>nm[k]===null)?'needStats':'invalidCalc')+'</p>';return;}
     const cards=[['expected',fmt(result.base.damage)],['after',fmt(result.after.damage)],['gain',gain(result.gain)]];
     const max=Math.max(...result.effects.map(r=>r.gain),.001);
-    out.innerHTML='<div class="nm-cards">'+cards.map(([k,v])=>'<div class="card"><div class="lbl">'+c(k)+'</div><div class="val">'+v+'</div></div>').join('')+'</div><p class="nm-note">'+c('attack')+': '+fmt(result.base.attack)+'</p><section class="panel eff"><h2>'+c('ranking')+'</h2>'+result.effects.map((r,i)=>'<div class="bar-row'+(i===0?' top':'')+'"><span class="name">'+esc(chartName(r.key))+' +'+r.amount+(!['power','destruction','justice','wisdom',...['attack','additionalAttack','minimumAttack','maximumAttack','pveAttack','bossAttack']].includes(r.key)?'pp':'')+'</span><div class="track"><div class="fill" style="width:'+Math.max(0,r.gain/max*100)+'%;background:var(--'+(i===0?'green':'purple')+')"></div></div><span class="num">'+gain(r.gain)+'</span></div>').join('')+'</section>';
+    out.innerHTML='<div class="nm-cards">'+cards.map(([k,v])=>'<div class="card"><div class="lbl">'+c(k)+'</div><div class="val">'+v+'</div></div>').join('')+'</div><p class="nm-note">'+c('attack')+': '+fmt(result.base.attack)+'</p><section class="panel eff"><h2>'+c('ranking')+'</h2>'+result.effects.map((r,i)=>'<div class="bar-row'+(i===0?' top':'')+'"><span class="name">'+esc(chartName(r.key))+' +'+r.amount+(!['power','destruction','justice','wisdom',...['attack','additionalAttack','minimumAttack','maximumAttack','pveAttack','bossAttack','penetration']].includes(r.key)?'pp':'')+'</span><div class="track"><div class="fill" style="width:'+Math.max(0,r.gain/max*100)+'%;background:var(--'+(i===0?'green':'purple')+')"></div></div><span class="num">'+gain(r.gain)+'</span></div>').join('')+'</section>';
   }
   function persistNm(){store.set('nm',nm);store.set('divine',divine);store.set('deltas',deltas);}
   nmHost.addEventListener('input',e=>{
     const field=e.target.dataset.field;if(!field)return;
+    if(['bossDefense','bossPerfectResistancePercent','bossDamageResistancePercent','bossHardHitResistancePercent'].includes(field)){nm.bossPreset='';$('nm-preset').value='';}
     const value=e.target.value===''?null:Number(e.target.value);
     if(e.target.dataset.kind==='nm-'){nm[field]=value;origins.notmeter[field]='manual';}else if(value===null)delete deltas[field];else deltas[field]=value;
     renderNm();persistNm();store.set('origins',origins);markOrigins();
   });
-  nmHost.addEventListener('change',e=>{if(e.target.id==='nm-direction'){nm.attackType=e.target.value;renderNm();persistNm();}});
+  nmHost.addEventListener('change',e=>{
+    if(e.target.id==='nm-research'){nm.researchEnabled=e.target.checked;renderNm();persistNm();return;}
+    if(e.target.id==='nm-preset'){const p=model.presets.find(p=>p.id===e.target.value);nm.bossPreset=e.target.value;if(p){for(const k of ['bossDefense','bossDamageResistancePercent','bossHardHitResistancePercent','bossPerfectResistancePercent'])nm[k]=p[k];nm.researchEnabled=true;origins.notmeter.bossHardHitResistancePercent='manual';store.set('origins',origins);}makeNm();persistNm();return;}
+    if(e.target.id==='nm-direction'){nm.attackType=e.target.value;renderNm();persistNm();}});
   nmHost.addEventListener('click',e=>{
     const id=e.target.id;
+    if(id==='nm-back-recommend'){const p=model.presets.find(p=>p.id===nm.bossPreset);if(p){nm.backAttackRatePercent=p.recommendedBackAttackRate*100;makeNm();persistNm();}return;}
     if(id==='nm-clear'){deltas={};makeNm();persistNm();return;}
     const match=id.match(/^nm-(save|load)([12])$/);
     if(match){
@@ -135,14 +147,14 @@
       }else{
         const data=store.get('nm_slot_'+slot,null);
         if(!data){$('nm-slot-status').textContent=c('missingSlot');return;}
-        nm=data.nm;divine=data.divine;for(const k of model.baseline)origins.notmeter[k]='manual';makeNm();persistNm();store.set('origins',origins);markOrigins();$('nm-slot-status').textContent=c('loaded');
+        nm={...model.researchDefaults,...data.nm};divine=data.divine;for(const k of model.baseline)origins.notmeter[k]='manual';makeNm();persistNm();store.set('origins',origins);markOrigins();$('nm-slot-status').textContent=c('loaded');
       }
     }
     if(id==='nm-compare'){
       const a=store.get('nm_slot_1',null),b=store.get('nm_slot_2',null);
       if(!a||!b){$('nm-slot-status').textContent=c('missingSlots');return;}
       // Compare saved character stats under the current shared NotMeter combat assumptions.
-      const current=Object.fromEntries([...model.scenario,'attackType'].map(k=>[k,nm[k]]));
+      const current=Object.fromEntries([...model.scenario,...model.researchKeys.filter(k=>!['multiHitPercent','penetration','raceDamageAmplificationPercent'].includes(k)),'researchEnabled','attackType'].map(k=>[k,nm[k]]));
       const aa=model.calculate(effective({...a.nm,...current},a.divine)),bb=model.calculate(effective({...b.nm,...current},b.divine));
       if(!aa||!bb){$('nm-slot-status').textContent=c('invalidCalc');return;}
       $('nm-comparison').innerHTML='<div class="compare-card">1: '+fmt(aa.base.damage)+' → 2: '+fmt(bb.base.damage)+'<div class="gain">'+gain((bb.base.damage/aa.base.damage-1)*100)+'</div></div>';

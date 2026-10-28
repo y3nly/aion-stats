@@ -46,3 +46,13 @@ For calibration, record current stats, skill tooltip, target, direction, buffs/d
 4. Commit and push the fork, then use its full commit SHA with the hosting project's `update-stats.py --revision SHA`.
 
 The crafting host vendors only the generated runtime files plus a revision/hash manifest. Scheduled market updates require no network access to this repository and cannot remove `/stats/`. The root upstream file stays untouched, making future merges straightforward.
+
+## Global research extension (2026-10-28)
+
+NotMeter mode now offers an opt-in research model. Multi-hit multiplies only core attack by `1 + clamp(19 + sheet + trait, 0, 100)/100 * 0.125`. Attack Bonus (after Attack Increase), PvE Attack, Boss Attack, and skill flat damage are excluded. The 19% hidden chance and uniform 1–4 strikes are user-supplied assumptions, not verified global mechanics. The inconsistent 0.201 alternative is not used. No unconfirmed clipboard field names are inferred; missing research stats require manual entry.
+
+Global divine increments are 0.1 percentage point for Might, Destruction, Justice, and Wisdom. Golden KR reference fixtures retain their original damage expectations; their three 0.2 divine marginal effects are scaled to 0.1 for this explicitly Global implementation.
+
+Research defense is raw rating: `max(Defense*(1+DefenseChange/100)-Penetration,0)*0.1`, applied after skill coefficient and flat skill damage. Damage Boost multiplier is `1+(general+PvE+boss+racial-target resistance)/100`. Nonpositive damage is reported as invalid rather than displaying misleading efficiency ratios. Skill coefficient 1 and flat 0 are generic comparison defaults. Perfect chance subtracts target Perfect resistance and clamps to 0–100%.
+
+Nine user-supplied KR-based target estimates are editable and unverified for Global. Choosing a preset explicitly enables research; recommended back uptime requires its own button and does not change direction. Ludra accuracy 1500 is an informational assumption, not a parry formula. Research settings persist locally; imports update documented base stats while retaining manual research values. Saved comparisons use current shared target/skill assumptions while retaining each setup’s Multi-hit, Penetration, and racial boost.

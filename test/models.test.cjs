@@ -24,7 +24,7 @@ for(const fixture of fixtures.fixtures)test('NotMeter reference parity: '+fixtur
   const result=m.calculate(fixture.input);assert.ok(result);
   for(const key of ['attack','effective','damage'])close(result.base[key],fixture.expected[key]);
   const keys={attackIncrease:'attackIncreasePercent',damageAmplification:'damageAmplificationPercent',weaponDamageAmplification:'weaponDamageAmplificationPercent',pveDamageAmplification:'pveDamageAmplificationPercent',bossDamageAmplification:'bossDamageAmplificationPercent',criticalDamageAmplification:'criticalDamageAmplificationPercent',perfect:'perfectPercent',hardHit:'hardHitPercent',frontDamageAmplification:'frontDamageAmplificationPercent',backDamageAmplification:'backDamageAmplificationPercent'};
-  for(const effect of fixture.expected.effects)close(result.effects.find(e=>e.key===(keys[effect.key]||effect.key)).gain,effect.gain);
+  for(const effect of fixture.expected.effects)close(result.effects.find(e=>e.key===(keys[effect.key]||effect.key)).gain,effect.gain/(['destruction','justice','wisdom'].includes(effect.key)?2:1));
 });
 test('UTF-8 profile maps both modes and derives Attack without Perfect or weapon boosts',()=>{
   const p={...profile,attack:8000,additionalAttack:400,minimumAttack:1000,maximumAttack:2000,attackIncreasePercent:20,perfectPercent:90,weaponDamageAmplificationPercent:75,hardHitPercent:0,unknownProducerField:{value:123}};
@@ -48,3 +48,15 @@ test('Perfect and divine-equivalent option changes affect the adjusted result on
   close(base.base.damage,changed.base.damage);assert.ok(changed.after.damage>base.base.damage);
   assert.equal(m.calculate(input,{attack:-20000}),null);
 });
+
+ test('Research Multi-hit affects core only, caps, and target reductions use separate stages',()=>{
+ const s={...m.defaults(),researchEnabled:true,attack:1000,additionalAttack:200,minimumAttack:100,maximumAttack:100,pveAttack:50,bossAttack:50,criticalChancePercent:0};
+ const a=m.evaluate(s);close(a.effective,1100*1.02375+300);
+ close(m.evaluate(s,{multiHitPercent:81}).effective,1100*1.125+300);
+ close(m.evaluate(s,{multiHitPercent:100}).effective,m.evaluate(s,{multiHitPercent:81}).effective);
+ close(m.evaluate(s,{additionalAttack:10}).damage-a.damage,10);
+ close(m.evaluate({...s,multiHitBasePercent:0,bossDefense:3000,penetration:1000,bossDamageResistancePercent:42.5,damageAmplificationPercent:100}).damage,(1400-200)*1.575);
+ close(m.evaluate({...s,researchEnabled:false}).damage,1400);
+ close(m.evaluate({...s,multiHitBasePercent:0,bossPerfectResistancePercent:100,perfectPercent:100,maximumAttack:300}).effective,1500);
+ assert.equal(m.evaluate({...s,skillCoefficient:0}),null);
+ });
