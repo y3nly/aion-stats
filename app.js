@@ -2,15 +2,15 @@
   'use strict';
   const m=AionStats,$=id=>document.getElementById(id),key='aion-stats:v1';
   let profile=null;
-  const scenarioIds=['target','crit','direction','uptime','partyDouble','doubleResist'];
+  const scenarioIds=['crit','direction','uptime','partyDouble','doubleResist'];
   const percent=k=>k.endsWith('Percent');
   for(const [k,label] of Object.entries(m.fields)){
     const option=document.createElement('option');option.value=k;option.textContent=label;$('upgrade-stat').append(option);
   }
   $('upgrade-stat').value='additionalAttack';
   function settings(){
-    for(const id of scenarioIds.slice(1).filter(x=>x!=='direction'))if(!$(id).checkValidity()||$(id).value==='')throw Error('Check '+$(id).parentElement.firstChild.textContent.trim()+'.');
-    return {boss:$('target').value==='boss',crit:Number($('crit').value),direction:$('direction').value,uptime:Number($('uptime').value),partyDouble:Number($('partyDouble').value),doubleResist:Number($('doubleResist').value)};
+    for(const id of scenarioIds.filter(x=>x!=='direction'))if(!$(id).checkValidity()||$(id).value==='')throw Error('Check '+$(id).parentElement.firstChild.textContent.trim()+'.');
+    return {boss:true,crit:Number($('crit').value),direction:$('direction').value,uptime:Number($('uptime').value),partyDouble:Number($('partyDouble').value),doubleResist:Number($('doubleResist').value)};
   }
   function save(){try{localStorage.setItem(key,JSON.stringify({profile,scenario:Object.fromEntries(scenarioIds.map(id=>[id,$(id).value]))}));}catch{$('status').textContent='Browser storage unavailable. Your current inputs still work.';}}
   function showStats(){

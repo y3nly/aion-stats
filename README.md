@@ -10,7 +10,7 @@ for the existing aion-craft host. The host pins the source revision with `update
 
 The independently implemented model follows Notmeter's public stat calculator
 (2026-10-26 reference), with a 50% Global crit cap, 0.1 percentage-point Global
-divine increments, and boss-only bonuses gated by the target selector. Stat pastes
+divine increments, and boss bonuses applied to every enemy. Stat pastes
 already contain divine bonuses; only changes to those points add further bonuses.
 Crit chance is an editable combat assumption, not inferred from crit rating.
 Rankings show +10 flat attack, +1 percentage point boosts, or +1 divine point.

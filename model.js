@@ -36,8 +36,8 @@
     const average=(v.minimumAttack+v.maximumAttack)/2;
     const roll=average+cap(v.perfectPercent)/100*(v.maximumAttack-average);
     const increase=1+v.attackIncreasePercent/100;
-    const effective=((v.attack+roll)*(1+v.weaponDamageAmplificationPercent/100)+v.additionalAttack)*increase+v.pveAttack+(c.boss?v.bossAttack:0);
-    const boost=1+(v.damageAmplificationPercent+v.pveDamageAmplificationPercent+(c.boss?v.bossDamageAmplificationPercent:0))/100;
+    const effective=((v.attack+roll)*(1+v.weaponDamageAmplificationPercent/100)+v.additionalAttack)*increase+v.pveAttack+v.bossAttack;
+    const boost=1+(v.damageAmplificationPercent+v.pveDamageAmplificationPercent+v.bossDamageAmplificationPercent)/100;
     const crit=1+cap(c.crit,50)/100*(.5+v.criticalDamageAmplificationPercent/100);
     const double=1+cap(v.hardHitPercent+c.partyDouble-c.doubleResist)/100;
     const direction=c.direction==='none'?1:1+cap(c.uptime)/100*v[c.direction+'DamageAmplificationPercent']/100;
