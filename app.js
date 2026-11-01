@@ -16,7 +16,7 @@
   function showStats(){
     $('stats').replaceChildren();if(!profile)return;
     for(const [k,label] of Object.entries(m.fields)){
-      const el=document.createElement('label');el.textContent=label+(percent(k)?' (%)':'');
+      const el=document.createElement('label');el.textContent=label;
       const input=document.createElement('input');input.type='number';input.min='0';input.step='any';input.value=profile[k];input.dataset.stat=k;
       input.addEventListener('change',()=>{
         if(input.value===''||!input.checkValidity())return;

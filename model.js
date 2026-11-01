@@ -5,11 +5,11 @@
   'use strict';
   const fields={
     attack:'Equipment Attack',additionalAttack:'Additional Attack',minimumAttack:'Weapon Min Attack',maximumAttack:'Weapon Max Attack',
-    pveAttack:'PvE Attack',bossAttack:'Boss Attack',attackIncreasePercent:'Attack Increase',
-    damageAmplificationPercent:'Damage Boost',weaponDamageAmplificationPercent:'Weapon Damage Boost',
-    pveDamageAmplificationPercent:'PvE Damage Boost',bossDamageAmplificationPercent:'Boss Damage Boost',
-    criticalDamageAmplificationPercent:'Crit Damage Boost',perfectPercent:'Perfect Chance',hardHitPercent:'Double Chance',
-    frontDamageAmplificationPercent:'Front Damage Boost',backDamageAmplificationPercent:'Back Damage Boost',
+    pveAttack:'PvE Attack',bossAttack:'Boss Attack',attackIncreasePercent:'Attack Increase %',
+    damageAmplificationPercent:'Damage Boost %',weaponDamageAmplificationPercent:'Weapon Damage Boost %',
+    pveDamageAmplificationPercent:'PvE Damage Boost %',bossDamageAmplificationPercent:'Boss Damage Boost %',
+    criticalDamageAmplificationPercent:'Crit Damage Boost %',perfectPercent:'Perfect Chance %',hardHitPercent:'Double Chance %',
+    frontDamageAmplificationPercent:'Front Damage Boost %',backDamageAmplificationPercent:'Back Damage Boost %',
     power:'Might',destruction:'Destruction',justice:'Justice',wisdom:'Wisdom'
   };
   const divine={power:'attackIncreasePercent',destruction:'attackIncreasePercent',justice:'perfectPercent',wisdom:'hardHitPercent'};
