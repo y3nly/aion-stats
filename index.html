@@ -6,12 +6,12 @@
 <div class="layout"><div>
 <section class="panel"><h2>Combat settings</h2><div class="fields">
 <p class="note">All enemies count as bosses. Boss Attack and Boss Damage Boost % always apply.</p>
-<label>Crit chance (%)<input id="crit" type="number" min="0" max="50" step="0.1" value="50"></label>
+<label>Crit chance (%)<input id="crit" type="number" min="0" max="100" step="0.1" value="50"></label>
 <label>Attack position<select id="direction"><option value="front">Front</option><option value="back">Back</option><option value="none">Neither</option></select></label>
 <label>Position uptime (%)<input id="uptime" type="number" min="0" max="100" value="100"></label>
 <label>Party Double bonus (%)<input id="partyDouble" type="number" min="0" max="100" step="0.1" value="0"></label>
 <label>Target Double resist (%)<input id="doubleResist" type="number" min="0" max="100" step="0.1" value="0"></label>
-</div><p class="note">Crit defaults to the Global cap of 50%; lower it if you are not capped. Target resistance is a manual assumption.</p></section>
+</div><p class="note">Crit defaults to 50%. You can override it from 0% to 100%. Target resistance is a manual assumption.</p></section>
 <details class="panel"><summary>Imported stats <span id="sheet"></span></summary><div id="stats" class="fields"></div><p class="note">Imported divine bonuses are already included. Rankings apply only the gain from one additional point.</p></details>
 <section class="panel"><h2>Compare an upgrade</h2><div class="upgrade"><label>Stat<select id="upgrade-stat"></select></label><label>Change<input id="upgrade-amount" type="number" step="any" value="20"></label></div><div id="upgrade-result" class="upgrade-result">Import your stats to compare an upgrade.</div></section>
 </div><section class="panel rankings"><div class="section-heading"><h2>Stat efficiency</h2><span class="badge">ESTIMATED DAMAGE GAIN</span></div><p>Each row shows its comparison amount. These amounts do not represent equal gear costs.</p><div id="rankings"><div class="empty">Paste your character stats to see your rankings.</div></div></section></div>

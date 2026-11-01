@@ -52,9 +52,9 @@
     catch(e){$('status').className='error';$('status').textContent=e.message;}
   });
   scenarioIds.forEach(id=>$(id).addEventListener('input',()=>{
-    if(id==='crit'&&Number($('crit').value)>50)$('crit').value=50;render();save();
+    if(id==='crit'&&Number($('crit').value)>100)$('crit').value=100;render();save();
   }));
   ['upgrade-stat','upgrade-amount'].forEach(id=>$(id).addEventListener('input',render));
   $('reset').addEventListener('click',()=>{try{localStorage.removeItem(key);}catch{}location.reload();});
-  try{const saved=JSON.parse(localStorage.getItem(key));if(saved?.profile){profile=m.decode('NOTMETER_STATS_V4:'+btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(saved.profile)))));for(const id of scenarioIds)if(saved.scenario?.[id]!==undefined)$(id).value=saved.scenario[id];$('crit').value=Math.min(50,Number($('crit').value));showStats();render();$('status').textContent='Restored your last stats.';}}catch{profile=null;}
+  try{const saved=JSON.parse(localStorage.getItem(key));if(saved?.profile){profile=m.decode('NOTMETER_STATS_V4:'+btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(saved.profile)))));for(const id of scenarioIds)if(saved.scenario?.[id]!==undefined)$(id).value=saved.scenario[id];$('crit').value=Math.min(100,Number($('crit').value));showStats();render();$('status').textContent='Restored your last stats.';}}catch{profile=null;}
 })();
