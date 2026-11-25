@@ -2,15 +2,47 @@
   'use strict';
   const m=AionStats,$=id=>document.getElementById(id),key='aion-stats:v1';
   let profile=null;
-  const scenarioIds=['crit','direction','uptime','partyDouble','doubleResist'];
+  const combatNumbers = ['crit', 'uptime', 'partyDouble', 'doubleResist'];
+  const scenarioIds = [...combatNumbers, 'direction', 'skill', 'skill-level', 'skill-variant'];
   const percent=k=>k.endsWith('Percent');
+  for (const [code, skill] of Object.entries(m.skills)) {
+    $('skill').add(new Option(skill.name, code));
+  }
   for(const [k,label] of Object.entries(m.fields)){
     const option=document.createElement('option');option.value=k;option.textContent=label;$('upgrade-stat').append(option);
   }
   $('upgrade-stat').value='additionalAttack';
+  function showSkill(useImportedLevel, variantIndex = '0') {
+    const code = $('skill').value;
+    const skill = m.skills[code];
+    $('skill-level-field').hidden = !skill;
+    $('skill-variant-field').hidden = !skill || skill.variants.length < 2;
+    $('skill-note').hidden = !skill;
+    $('skill-variant').replaceChildren();
+    if (skill) {
+      if (useImportedLevel) {
+        const level = Array.isArray(profile?.skills) && profile.skills.find(entry => String(entry?.code) === code)?.level;
+        $('skill-level').value = Number.isInteger(level) && level >= 1 && level <= 40 ? level : 20;
+      }
+      skill.variants.forEach((variant, index) => $('skill-variant').add(new Option(variant.name, String(index))));
+      $('skill-variant').value = skill.variants[variantIndex] ? variantIndex : '0';
+    }
+    showSkillNote();
+  }
+  function showSkillNote() {
+    const code = $('skill').value;
+    const variant = m.skills[code]?.variants[$('skill-variant').value];
+    $('crit').disabled = !!variant?.guaranteedCrit;
+    if (!variant) return;
+    let note = 'Ranks upgrades for the selected PvE damage component.';
+    if (variant.guaranteedCrit) note = 'This specialty uses 100% crit chance.';
+    if (code === '11100000') note = 'Main hit only. Set effective crit chance for your specialty.';
+    if (code === '11800000') note = 'Ranks damage per proc. Proc frequency and buff uptime are separate.';
+    $('skill-note').textContent = note;
+  }
   function settings(){
-    for(const id of scenarioIds.filter(x=>x!=='direction'))if(!$(id).checkValidity()||$(id).value==='')throw Error('Check '+$(id).parentElement.firstChild.textContent.trim()+'.');
-    return {boss:true,crit:Number($('crit').value),direction:$('direction').value,uptime:Number($('uptime').value),partyDouble:Number($('partyDouble').value),doubleResist:Number($('doubleResist').value)};
+    for(const id of combatNumbers)if(!$(id).disabled&&(!$(id).checkValidity()||$(id).value===''))throw Error('Check '+$(id).parentElement.firstChild.textContent.trim()+'.');
+    return {crit:Number($('crit').value),direction:$('direction').value,uptime:Number($('uptime').value),partyDouble:Number($('partyDouble').value),doubleResist:Number($('doubleResist').value), skill:$('skill').value, skillLevel:Number($('skill-level').value), skillVariant:Number($('skill-variant').value)};
   }
   function save(){try{localStorage.setItem(key,JSON.stringify({profile,scenario:Object.fromEntries(scenarioIds.map(id=>[id,$(id).value]))}));}catch{$('status').textContent='Browser storage unavailable. Your current inputs still work.';}}
   function showStats(){
@@ -48,13 +80,30 @@
     }catch(e){$('rankings').textContent=e.message;$('upgrade-result').textContent='Check your stats and combat settings.';}
   }
   $('import').addEventListener('click',()=>{
-    try{profile=m.decode($('paste').value);showStats();render();save();$('status').className='';$('status').textContent='Stats imported. Review crit chance and combat settings.';$('paste').value='';}
+    try{profile=m.decode($('paste').value);showSkill(true, $('skill-variant').value);showStats();render();save();$('status').className='';$('status').textContent='Stats imported. Review your skill level and combat settings.';$('paste').value='';}
     catch(e){$('status').className='error';$('status').textContent=e.message;}
   });
   scenarioIds.forEach(id=>$(id).addEventListener('input',()=>{
-    if(id==='crit'&&Number($('crit').value)>100)$('crit').value=100;render();save();
+    if(id==='crit'&&Number($('crit').value)>100)$('crit').value=100;
+    if (id === 'skill') showSkill(true);
+    if (id === 'skill-variant') showSkillNote();
+    render();save();
   }));
   ['upgrade-stat','upgrade-amount'].forEach(id=>$(id).addEventListener('input',render));
   $('reset').addEventListener('click',()=>{try{localStorage.removeItem(key);}catch{}location.reload();});
-  try{const saved=JSON.parse(localStorage.getItem(key));if(saved?.profile){profile=m.decode('NOTMETER_STATS_V4:'+btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(saved.profile)))));for(const id of scenarioIds)if(saved.scenario?.[id]!==undefined)$(id).value=saved.scenario[id];$('crit').value=Math.min(100,Number($('crit').value));showStats();render();$('status').textContent='Restored your last stats.';}}catch{profile=null;}
+  try {
+    const saved = JSON.parse(localStorage.getItem(key));
+    for (const id of scenarioIds) {
+      if (id !== 'skill-variant' && saved?.scenario?.[id] !== undefined) $(id).value = saved.scenario[id];
+    }
+    if (!$('skill').value) $('skill').value = '';
+    if (Number($('crit').value) > 100) $('crit').value = 100;
+    showSkill(false, saved?.scenario?.['skill-variant']);
+    if (saved?.profile) {
+      profile = m.decode('NOTMETER_STATS_V4:' + btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(saved.profile)))));
+      showStats();
+      render();
+      $('status').textContent = 'Restored your last stats.';
+    }
+  } catch { profile = null; }
 })();

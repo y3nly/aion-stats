@@ -4,6 +4,11 @@
 <header><div><div class="eyebrow">AION 2 · GLOBAL</div><h1>Stats</h1></div><nav class="tool-navigation" aria-label="Aion tools"><a href="/market/">Market</a><a href="/market/tracker/">Tracker</a><a href="/profits/">Profits</a><a href="/alchemy/">Consumables</a><a href="/stats/" aria-current="page">Stats</a><a href="/craft/">Crafting</a></nav></header>
 <section class="panel import"><div class="section-heading"><h2>Your character</h2><button id="reset" class="quiet" type="button">Reset</button></div><p>Paste your Notmeter stats to see which upgrades add the most estimated damage.</p><label for="paste">Notmeter stat export</label><textarea id="paste" rows="2" placeholder="NOTMETER_STATS_V4:…" spellcheck="false"></textarea><div class="import-actions"><button id="import" type="button">Import stats</button><span id="status" role="status" aria-live="polite">Your stats stay in this browser.</span></div></section>
 <div class="layout"><div>
+<section class="panel"><h2>Skill</h2><div class="fields">
+<label for="skill">Damage model<select id="skill"><option value="">General stat estimate</option></select></label>
+<label for="skill-level" id="skill-level-field" hidden>Skill level<input id="skill-level" type="number" min="1" max="40" value="20"></label>
+<label for="skill-variant" id="skill-variant-field" hidden>Skill variant<select id="skill-variant"></select></label>
+</div><p class="note" id="skill-note" hidden></p></section>
 <section class="panel"><h2>Combat settings</h2><div class="fields">
 <p class="note">All enemies count as bosses. Boss Attack and Boss Damage Boost % always apply.</p>
 <label>Crit chance (%)<input id="crit" type="number" min="0" max="100" step="0.1" value="50"></label>
@@ -15,5 +20,5 @@
 <details class="panel"><summary>Imported stats <span id="sheet"></span></summary><div id="stats" class="fields"></div><p class="note">Imported divine bonuses are already included. Rankings apply only the gain from one additional point.</p></details>
 <section class="panel"><h2>Compare an upgrade</h2><div class="upgrade"><label>Stat<select id="upgrade-stat"></select></label><label>Change<input id="upgrade-amount" type="number" step="any" value="20"></label></div><div id="upgrade-result" class="upgrade-result">Import your stats to compare an upgrade.</div></section>
 </div><section class="panel rankings"><div class="section-heading"><h2>Stat efficiency</h2><span class="badge">ESTIMATED DAMAGE GAIN</span></div><p>Each row shows its comparison amount. These amounts do not represent equal gear costs.</p><div id="rankings"><div class="empty">Paste your character stats to see your rankings.</div></div></section></div>
-<footer>Based on the <a href="https://notmeter.com/?view=stat-efficiency" target="_blank" rel="noopener">Notmeter stat model</a> · <a href="https://github.com/y3nly/aion-stats">Source</a><p>Relative estimates, not measured DPS. Accuracy, crit-rating conversion, multi-hit, defense, skill damage and combat speed are not modeled.</p></footer>
+<footer>Based on the <a href="https://notmeter.com/?view=stat-efficiency" target="_blank" rel="noopener">Notmeter stat model</a> and Global skill data · <a href="https://github.com/y3nly/aion-stats">Source</a><p>Estimates are per hit. Crit chance uses your combat setting. Accuracy, crit rating, flat Critical and positional Attack, multi-hit, target defense and combat speed require separate measurements.</p></footer>
 </main></body></html>

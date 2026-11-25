@@ -16,9 +16,19 @@ Crit chance is an editable combat assumption, not inferred from crit rating.
 Rankings show +10 flat attack, +1 percentage point boosts, or +1 divine point.
 Use the upgrade comparison to compare actual item rolls.
 
-This is an estimated relative-damage model. Accuracy, crit-rating conversion,
-multi-hit, defense/penetration, skill coefficients/fixed damage, shards, and combat
-speed are not modeled. Perfect, crit, Double and positional effects use averages.
+The Skill selector adds PvE level 1–40 estimates for Overhead Slam, Upward Strike,
+Smashing Blow, Rending Blow, Ruinous Blow, and Murderous Burst. It reads a matching
+level from a Notmeter paste when available and otherwise starts at level 20.
+Rankings use `skill flat damage + effective Attack × skill coefficient` for the
+selected skill or proc. Values come from the Global build 26909920 effect tables.
+Specialty 4 gives Overhead Slam and Upward Strike guaranteed crits. Smashing and
+Rending offer base and specialty 4 damage for one to four targets. Ruinous ranks
+the main hit and Murderous Burst ranks one proc of the selected variant.
+
+The rankings estimate damage gain with the selected skill and combat settings.
+Accuracy, crit-rating conversion, flat Critical and positional Attack, multi-hit,
+defense/penetration, shards, and combat speed require separate measurements.
+Perfect, crit, Double and positional effects use averages.
 There are no guessed boss presets, research mode, synthetic formula tests, or
 claims of combat-log validation. The previous Bongbong UI is preserved in Git history.
 
