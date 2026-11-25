@@ -3,8 +3,10 @@
   const m=AionStats,$=id=>document.getElementById(id),key='aion-stats:v1';
   let profile=null;
   const combatNumbers = ['crit', 'uptime', 'partyDouble', 'doubleResist'];
-  const scenarioIds = [...combatNumbers, 'direction', 'skill', 'skill-level', 'skill-variant', 'followup-level', 'followup-variant', 'split-chain'];
+  const scenarioIds = [...combatNumbers, 'direction', 'skill', 'skill-level', 'skill-variant', 'split-chain'];
   const percent=k=>k.endsWith('Percent');
+  const baseSkill = code => Object.keys(m.chains).find(base => m.chains[base] === code) || code;
+  let displayedSkill = '';
   function showSkillOptions(selection) {
     const split = $('split-chain').checked;
     $('skill').replaceChildren(new Option('General stat estimate', ''));
@@ -21,48 +23,43 @@
     const option=document.createElement('option');option.value=k;option.textContent=label;$('upgrade-stat').append(option);
   }
   $('upgrade-stat').value='additionalAttack';
-  const followupCode = () => $('split-chain').checked ? undefined : m.chains[$('skill').value];
-  function showSkillInputs(code, group, useImportedLevel, variantIndex) {
+  function showSkill(useImportedLevel, variantIndex = '0') {
+    const code = $('skill').value;
     const skill = m.skills[code];
-    $(`${group}-level-field`).hidden = !skill;
-    $(`${group}-variant-field`).hidden = !skill || skill.variants.length < 2;
-    const select = $(`${group}-variant`);
-    if (!skill) return;
+    displayedSkill = code;
+    $('skill-level-field').hidden = !skill;
+    $('skill-variant-field').hidden = !skill || skill.variants.length < 2;
+    const select = $('skill-variant');
     select.replaceChildren();
-    if (useImportedLevel) {
-      const level = Array.isArray(profile?.skills) && profile.skills.find(entry => String(entry?.code) === code)?.level;
-      $(`${group}-level`).value = Number.isInteger(level) && level >= 1 && level <= 40 ? level : 20;
-    }
-    skill.variants.forEach((variant, index) => select.add(new Option(variant.name, String(index))));
-    select.value = skill.variants[variantIndex] ? variantIndex : '0';
-  }
-  function showSkill(useImportedLevel, variantIndex = '0', followupVariant = '0') {
-    const followup = m.skills[followupCode()];
-    showSkillInputs($('skill').value, 'skill', useImportedLevel, variantIndex);
-    showSkillInputs(followupCode(), 'followup', useImportedLevel, followupVariant);
-    if (followup) {
-      $('followup-level-label').textContent = `${followup.name} level`;
-      $('followup-variant-label').textContent = `${followup.name} variant`;
+    if (skill) {
+      if (useImportedLevel) {
+        const level = Array.isArray(profile?.skills) && profile.skills.find(entry => String(entry?.code) === baseSkill(code))?.level;
+        $('skill-level').value = Number.isInteger(level) && level >= 1 && level <= 40 ? level : 20;
+      }
+      skill.variants.forEach((variant, index) => select.add(new Option(variant.name, String(index))));
+      select.value = skill.variants[variantIndex] ? variantIndex : '0';
     }
     showSkillNote();
   }
   function showSkillNote() {
     const code = $('skill').value;
     const variant = m.skills[code]?.variants[$('skill-variant').value];
-    const followup = m.skills[followupCode()]?.variants[$('followup-variant').value];
     $('skill-note').hidden = !variant;
-    $('crit').disabled = !!variant?.guaranteedCrit && (!followup || !!followup.guaranteedCrit);
+    $('crit').disabled = !!variant?.guaranteedCrit;
     if (!variant) return;
     let note = 'Ranks upgrades for the selected PvE damage component.';
     if (variant.guaranteedCrit) note = 'This specialty uses 100% crit chance.';
-    if (followup) note = 'Ranks one use of each skill in the chain. Guaranteed-crit specialties use 100% crit.';
+    if (!$('split-chain').checked && m.chains[code]) {
+      note = 'Both skills use the same level and specialty.';
+      if (variant.guaranteedCrit) note += ' Both use 100% crit chance.';
+    }
     if (code === '11100000') note = 'Main hit only. Set effective crit chance for your specialty.';
     if (code === '11800000') note = 'Ranks damage per proc. Proc frequency and buff uptime are separate.';
     $('skill-note').textContent = note;
   }
   function settings(){
     for(const id of combatNumbers)if(!$(id).disabled&&(!$(id).checkValidity()||$(id).value===''))throw Error('Check '+$(id).parentElement.firstChild.textContent.trim()+'.');
-    return {crit:Number($('crit').value),direction:$('direction').value,uptime:Number($('uptime').value),partyDouble:Number($('partyDouble').value),doubleResist:Number($('doubleResist').value), skill:$('skill').value, skillLevel:Number($('skill-level').value), skillVariant:Number($('skill-variant').value), split:$('split-chain').checked, followupLevel:Number($('followup-level').value), followupVariant:Number($('followup-variant').value)};
+    return {crit:Number($('crit').value),direction:$('direction').value,uptime:Number($('uptime').value),partyDouble:Number($('partyDouble').value),doubleResist:Number($('doubleResist').value), skill:$('skill').value, skillLevel:Number($('skill-level').value), skillVariant:Number($('skill-variant').value), split:$('split-chain').checked};
   }
   function save(){try{localStorage.setItem(key,JSON.stringify({profile,scenario:Object.fromEntries(scenarioIds.map(id=>[id,id==='split-chain'?$(id).checked:$(id).value]))}));}catch{$('status').textContent='Browser storage unavailable. Your current inputs still work.';}}
   function showStats(){
@@ -100,22 +97,22 @@
     }catch(e){$('rankings').textContent=e.message;$('upgrade-result').textContent='Check your stats and combat settings.';}
   }
   $('import').addEventListener('click',()=>{
-    try{profile=m.decode($('paste').value);showSkill(true, $('skill-variant').value, $('followup-variant').value);showStats();render();save();$('status').className='';$('status').textContent='Stats imported. Review your skill level and combat settings.';$('paste').value='';}
+    try{profile=m.decode($('paste').value);showSkill(true, $('skill-variant').value);showStats();render();save();$('status').className='';$('status').textContent='Stats imported. Review your skill level and combat settings.';$('paste').value='';}
     catch(e){$('status').className='error';$('status').textContent=e.message;}
   });
   scenarioIds.forEach(id=>$(id).addEventListener('input',()=>{
     if(id==='crit'&&Number($('crit').value)>100)$('crit').value=100;
-    if (id === 'skill') showSkill(true);
+    if (id === 'skill') {
+      const sameChain = baseSkill(displayedSkill) === baseSkill($('skill').value);
+      showSkill(!sameChain, sameChain ? $('skill-variant').value : '0');
+    }
     if (id === 'split-chain') {
       const selection = $('skill').value;
-      const lead = !$('split-chain').checked && Object.keys(m.chains).find(code => m.chains[code] === selection);
-      const level = $('skill-level').value;
       const variant = $('skill-variant').value;
-      showSkillOptions(lead || selection);
-      showSkill(!!lead, lead ? '0' : variant, lead ? variant : $('followup-variant').value);
-      if (lead) $('followup-level').value = level;
+      showSkillOptions($('split-chain').checked ? selection : baseSkill(selection));
+      showSkill(false, variant);
     }
-    if (id === 'skill-variant' || id === 'followup-variant') showSkillNote();
+    if (id === 'skill-variant') showSkillNote();
     render();save();
   }));
   ['upgrade-stat','upgrade-amount'].forEach(id=>$(id).addEventListener('input',render));
@@ -127,10 +124,10 @@
     const selection = saved?.scenario?.skill || '';
     showSkillOptions(selection);
     for (const id of scenarioIds) {
-      if (!['skill', 'skill-variant', 'followup-variant', 'split-chain'].includes(id) && saved?.scenario?.[id] !== undefined) $(id).value = saved.scenario[id];
+      if (!['skill', 'skill-variant', 'split-chain'].includes(id) && saved?.scenario?.[id] !== undefined) $(id).value = saved.scenario[id];
     }
     if (Number($('crit').value) > 100) $('crit').value = 100;
-    showSkill(false, saved?.scenario?.['skill-variant'], saved?.scenario?.['followup-variant']);
+    showSkill(false, saved?.scenario?.['skill-variant']);
     if (saved?.profile) {
       profile = m.decode('NOTMETER_STATS_V4:' + btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(saved.profile)))));
       showStats();

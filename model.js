@@ -176,7 +176,7 @@
     }
     let expected = c.skill ? expectedSkill(c.skill, c.skillLevel, c.skillVariant) : effective * (1 + effectiveCrit * critBoost);
     const followup = !c.split && chains[c.skill];
-    if (followup) expected += expectedSkill(followup, c.followupLevel, c.followupVariant);
+    if (followup) expected += expectedSkill(followup, c.skillLevel, c.skillVariant);
     const double=1+cap(v.hardHitPercent+c.partyDouble-c.doubleResist)/100;
     const direction=c.direction==='none'?1:1+cap(c.uptime)/100*v[c.direction+'DamageAmplificationPercent']/100;
     return {damage:expected*boost*double*direction,sheet:(v.attack+average+v.additionalAttack)*increase};
