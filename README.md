@@ -19,6 +19,8 @@ Use the upgrade comparison to compare actual item rolls.
 The Skill selector adds PvE level 1–40 estimates for Overhead Slam, Upward Strike,
 Smashing Blow, Rending Blow, Ruinous Blow, and Murderous Burst. It reads a matching
 level from a Notmeter paste when available and otherwise starts at level 20.
+Overhead Slam + Upward Strike and Rending Blow + Smashing Blow each rank one use
+of both skills by default. Split chain skills enables individual rankings.
 Rankings use `skill flat damage + effective Attack × skill coefficient` for the
 selected skill or proc. Values come from the Global build 26909920 effect tables.
 Specialty 4 gives Overhead Slam and Upward Strike guaranteed crits. Smashing and

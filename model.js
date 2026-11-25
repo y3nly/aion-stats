@@ -133,6 +133,8 @@
     ]}
   };
 
+  const chains = {11170000: '11440000', 11010000: '11420000'};
+
   function skillDamage(code, level, variantIndex) {
     if (!Object.hasOwn(skills, code) || !Number.isInteger(level) || level < 1 || level > 40) {
       throw Error('Select a skill level from 1 to 40.');
@@ -165,13 +167,19 @@
     const increase=1+v.attackIncreasePercent/100;
     const effective=((v.attack+roll)*(1+v.weaponDamageAmplificationPercent/100)+v.additionalAttack)*increase+v.pveAttack+v.bossAttack;
     const boost=1+(v.damageAmplificationPercent+v.pveDamageAmplificationPercent+v.bossDamageAmplificationPercent)/100;
-    const skill = c.skill ? skillDamage(c.skill, c.skillLevel, c.skillVariant) : null;
-    const hit = skill ? effective * skill.coefficient + skill.flat : effective;
-    const critChance = skill?.guaranteedCrit ? 100 : cap(c.crit, 100);
-    const crit=1+critChance/100*(.5+v.criticalDamageAmplificationPercent/100);
+    const critBoost = .5 + v.criticalDamageAmplificationPercent / 100;
+    const effectiveCrit = cap(c.crit, 100) / 100;
+    function expectedSkill(code, level, variant) {
+      const skill = skillDamage(code, level, variant);
+      const chance = skill.guaranteedCrit ? 1 : effectiveCrit;
+      return (effective * skill.coefficient + skill.flat) * (1 + chance * critBoost);
+    }
+    let expected = c.skill ? expectedSkill(c.skill, c.skillLevel, c.skillVariant) : effective * (1 + effectiveCrit * critBoost);
+    const followup = !c.split && chains[c.skill];
+    if (followup) expected += expectedSkill(followup, c.followupLevel, c.followupVariant);
     const double=1+cap(v.hardHitPercent+c.partyDouble-c.doubleResist)/100;
     const direction=c.direction==='none'?1:1+cap(c.uptime)/100*v[c.direction+'DamageAmplificationPercent']/100;
-    return {damage:hit*boost*crit*double*direction,sheet:(v.attack+average+v.additionalAttack)*increase};
+    return {damage:expected*boost*double*direction,sheet:(v.attack+average+v.additionalAttack)*increase};
   }
   function compare(s,c,delta){const before=calculate(s,c),after=calculate(s,c,delta);return {before,after,gain:100*(after.damage/before.damage-1)};}
   function rank(s,c){
@@ -183,5 +191,5 @@
     }
     return rows.sort((a,b)=>b.gain-a.gain);
   }
-  const api={fields,flat,divine,skills,skillDamage,decode,calculate,compare,rank};root.AionStats=api;if(typeof module!=='undefined')module.exports=api;
+  const api={fields,flat,divine,skills,chains,decode,calculate,compare,rank};root.AionStats=api;if(typeof module!=='undefined')module.exports=api;
 })(globalThis);
